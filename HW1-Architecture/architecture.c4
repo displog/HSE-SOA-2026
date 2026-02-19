@@ -1,0 +1,94 @@
+specification {
+  element person
+  element system
+  element container
+  element infrastructure
+}
+
+model {
+  customer = person 'Покупатель'
+  seller = person 'Продавец'
+
+  payment_gw = system 'Payment Gateway' {
+    description 'Внешний эквайринг'
+  }
+
+  marketplace = system 'Marketplace System' {
+    description 'Цифровая платформа торговли'
+
+    // Внутренние контейнеры
+    gw = container 'API Gateway' {
+      technology 'Go / NGINX'
+    }
+    user_srv = container 'User Service' {
+      technology 'Python'
+    }
+    catalog_srv = container 'Catalog Service' {
+      technology 'Go'
+    }
+    order_srv = container 'Order Service' {
+      technology 'Java'
+    }
+    payment_srv = container 'Payment Service' {
+      technology 'Go'
+    }
+    feed_srv = container 'Feed Service' {
+      technology 'Python / ML'
+    }
+    notif_srv = container 'Notification Service' {
+      technology 'Node.js'
+    }
+
+    db = infrastructure 'Shared Data Infrastructure' {
+      description 'Базы данных сервисов'
+      db_user = infrastructure 'User DB'
+      db_catalog = infrastructure 'Catalog DB'
+      kafka = infrastructure 'Kafka Message Broker'
+    }
+  }
+
+  // Связи
+  customer -> gw 'Просмотр и покупка'
+  seller -> gw 'Управление товарами'
+
+  gw -> user_srv 'Auth'
+  gw -> catalog_srv 'Catalog API'
+  gw -> order_srv 'Order API'
+  gw -> feed_srv 'Personalized Feed'
+
+  user_srv -> db_user 'Persist'
+  catalog_srv -> db_catalog 'Persist'
+
+  order_srv -> kafka 'Publish OrderEvents'
+  kafka -> payment_srv 'Consume'
+  kafka -> notif_srv 'Consume'
+
+  payment_srv -> payment_gw 'External Call'
+}
+
+views {
+
+  // 1. Уровень Системы (System Context)
+  view system_context {
+    title "Marketplace - System Context"
+    include
+      customer,
+      seller,
+      marketplace,
+      payment_gw
+
+    navigateTo container_view
+  }
+
+  // 2. Уровень Контейнеров (Container Diagram)
+  view container_view {
+    title "Marketplace - Containers"
+    include
+      customer,
+      seller,
+      marketplace.*,
+      payment_gw
+
+    autoLayout TopBottom
+  }
+}

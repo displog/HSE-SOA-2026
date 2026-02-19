@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# IDE (PyCharm / VSCode)
+.idea/
+.vscode/
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
