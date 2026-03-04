@@ -1,0 +1,19 @@
+# Сгенерированный код — генерируется при сборке
+src/schemas/generated.py
+src/api/
+
+# Git, venv, cache
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+
+# IDE, OS
+.idea
+.vscode
+*.swp
+.DS_Store

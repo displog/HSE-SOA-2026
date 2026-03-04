@@ -1,0 +1,7 @@
+trash/
+.env
+for-docker/.env
+*.pyc
+__pycache__
+.venv
+.idea
