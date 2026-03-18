@@ -6,3 +6,5 @@
 * [Домашнее задание №1: Проектирование архитектуры маркетплейса](./HW1-Architecture/) — Спроектирована микросервисная архитектура, реализован контейнеризированный сервис каталога.
 
 * [Домашнее задание №2: OpenAPI + CRUD](./HW2-MarketplaceAPI/) — Разработан API маркетплейса по контракту: OpenAPI-спецификация, кодогенерация моделей и роутеров, CRUD товаров, заказы с промокодами, JWT-авторизация, ролевая модель (USER/SELLER/ADMIN).
+
+* [Домашнее задание №3: Flight Booking: gRPC + Redis](./HW3-FlightBooking/) — Реализована система из двух микросервисов (Booking Service REST, Flight Service gRPC) с отдельными БД, межсервисной аутентификацией (JWT), Redis-кешированием (Cache-Aside, Sentinel), retry с exponential backoff, Circuit Breaker.

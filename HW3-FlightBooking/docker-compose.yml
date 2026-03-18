@@ -1,0 +1,101 @@
+services:
+  postgres_booking:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking_pass
+      POSTGRES_DB: booking_db
+    volumes:
+      - postgres_booking_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking -d booking_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres_flight:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: flight
+      POSTGRES_PASSWORD: flight_pass
+      POSTGRES_DB: flight_db
+    volumes:
+      - postgres_flight_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flight -d flight_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis_master:
+    image: redis:7-alpine
+    command: redis-server
+    volumes:
+      - redis_master_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis_replica:
+    image: redis:7-alpine
+    command: redis-server --replicaof redis_master 6379
+    depends_on:
+      redis_master:
+        condition: service_healthy
+
+  redis_sentinel:
+    build:
+      context: .
+      dockerfile: redis-sentinel/Dockerfile
+    depends_on:
+      redis_master:
+        condition: service_healthy
+      redis_replica:
+        condition: service_started
+
+  flight-service:
+    build:
+      context: .
+      dockerfile: flight-service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://flight:flight_pass@postgres_flight:5432/flight_db
+      FLIGHT_GRPC_PORT: 50051
+      FLIGHT_JWT_SECRET: ${FLIGHT_JWT_SECRET:-your-32-char-secret-key-change-me}
+      REDIS_SENTINEL_HOSTS: redis_sentinel:26379
+      REDIS_SENTINEL_SERVICE_NAME: mymaster
+      REDIS_STANDALONE_URL: redis://redis_master:6379
+      REDIS_USE_SENTINEL: ${REDIS_USE_SENTINEL:-true}
+    depends_on:
+      postgres_flight:
+        condition: service_healthy
+      redis_master:
+        condition: service_healthy
+      redis_sentinel:
+        condition: service_started
+    ports: []
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: booking-service/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://booking:booking_pass@postgres_booking:5432/booking_db
+      FLIGHT_GRPC_ADDR: flight-service:50051
+      BOOKING_JWT_SECRET: ${BOOKING_JWT_SECRET:-your-32-char-secret-key-change-me}
+      CB_FAILURE_THRESHOLD: ${CB_FAILURE_THRESHOLD:-5}
+      CB_RECOVERY_TIMEOUT: ${CB_RECOVERY_TIMEOUT:-15}
+      CB_SUCCESS_THRESHOLD: ${CB_SUCCESS_THRESHOLD:-1}
+    depends_on:
+      postgres_booking:
+        condition: service_healthy
+      flight-service:
+        condition: service_started
+    ports:
+      - "8001:8000"
+
+volumes:
+  postgres_booking_data:
+  postgres_flight_data:
+  redis_master_data:
